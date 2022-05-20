@@ -1,0 +1,410 @@
+---
+title: "Residuals"
+output:
+  html_document:
+    theme: journal
+    code_folding: hide
+---
+
+<script type="text/javascript">
+function showhide(id) {
+var e = document.getElementById(id);
+e.style.display = (e.style.display == 'block') ? 'none' : 'block';}
+</script>
+
+----
+
+
+```{r message=FALSE, warning=FALSE}
+
+library(DT)
+library(tidyverse)
+library(ggplot2)
+library(latex2exp)
+
+weather <- read_csv("../Data/WeatherData2.csv")
+```
+
+
+## {.tabset .tabset-fade}
+
+This document has been created to help students of linear regression better understand how it, including what residuals are, how the regression line is found, and how to assess how well the regression fits the data.
+
+<div style="padding-left:35px;">
+<div style="font-size:9pt;">
+Note: For this document, the following data set will be used. <a href="javascript:showhide('data')">View.</a>
+</div>
+
+<div id="data" style="display:none;">
+
+This weather data was pulled from the website [timeanddate.com](https://www.timeanddate.com/weather/@11789022/historic) between the years of 2014 to 2022.
+
+Hint: click on the code button to the right to view the data.
+
+
+```{r fig.align = 'center'}
+
+datatable(weather)
+
+```
+
+`temp1` is the high temperature of rainy days in April and early May. `temp2` is the high of the previous day and `predict_temp` is the high of the following day. `average` is simply the average of `temp1` and `temp2`.
+
+</div>
+</div>
+
+
+
+Before we can dive into explaining the former, the student must be familiar with the terminology associated with linear regressions. Click <a href="javascript:showhide('terms')">here</a> if you need a refresher.
+
+<div id="terms" style="display:none;">
+
+
+|Symbol|Meaning|
+|:----:|:-----:|
+|$X_i$|The X-value of the data|
+|$Y_i$|The data|
+|$\hat{Y}$|The Regression Line|
+|$\hat{Y}_i$|The Y-value of the data on the Regression Line|
+|$\bar{Y}$|The mean Y value of all the data|
+
+
+```{r fig.align='center', warning=FALSE}
+
+weather.lm <- lm(predict_temp~average, data = weather)
+
+ggplot(data=weather, aes(x=average, y=predict_temp)) +
+  geom_point(color="darkturquoise", size=2) +
+  geom_point(x=65, y=63, color="darkturquoise", size=4) +
+  labs(x="Average High of Previous Two Days", y="Pedicted Temperature", title="Weather on Rainy Days in Rexburg, April and May 2014 to 2022", subtitle="Note: Red Points aren't Real Data") +
+  geom_smooth(method="lm", formula=y~x, se=F, color="firebrick", size=1.1) +
+  theme_bw() +
+  geom_hline(yintercept=59.58, color="firebrick", size=1, linetype="dashed", alpha=0.5) +
+  geom_vline(xintercept=65, color="darkturquoise", linetype="dashed", size=1, alpha=2) +
+  geom_point(x=65, y=61.05, color="firebrick", size=4) +
+  geom_point(x=65, y=59.58, color="firebrick", size=4) +
+  geom_point(x=65, y=51.2, color="firebrick", size=4) +
+  geom_text(x=64.3, y=63.5, label=TeX("$Y_i$"), color="darkturquoise", size=5) +
+  geom_text(x=64.3, y=62, label=TeX("$\\hat{Y_i}$"), size=5, color="firebrick") +
+  geom_text(x=64.3, y=58.8, label=TeX("$\\bar{Y}$"), size=5, color="firebrick") +
+  geom_text(x=75, y=62, label=TeX("$\\hat{Y}$"), color="firebrick", size=5) +
+  geom_text(x=75, y=58.8, label=TeX("$\\bar{Y}$"), color="firebrick", alpha=0.2, size=5) +
+  geom_text(x=64.3, y=52, label=TeX("$X_i$"), color="firebrick", size=5) +
+  ylim(52,67)
+
+```
+
+
+
+
+
+----
+
+</div>
+
+
+
+### Residuals
+
+A residual is the distance from any data point to the regression line. This is what a residual looks like on a graph.
+
+```{r fig.align='center', warning=FALSE}
+ggplot(data=weather, aes(x=average, y=predict_temp)) +
+  labs(x="Average High of Previous Two Days", y="Pedicted Temperature", title="Weather on Rainy Days in Rexburg, April and May 2014 to 2022") +
+  geom_point(color="darkturquoise", size=2) +
+  geom_smooth(method="lm", formula=y~x, se=F, color="firebrick", size=1.1) +
+  theme_bw() +
+  geom_segment(x=65, y=63, xend=65, yend=61.05, color="darkturquoise", size=1, linetype="solid", alpha=0.2) +
+  ylim(52,67) +
+  geom_point(x=65, y=63, color="darkturquoise", size=4) +
+  geom_text(x=65, y=64, color="darkturquoise", size=5, label=TeX("$Y_i$")) +
+  geom_point(x=65, y=61.05, color="firebrick", size=4) +
+  geom_text(x=65, y=60, label=TeX("$\\hat{Y_i}$"), size=5, color="firebrick") +
+  geom_text(x=64.5, y=62, label=TeX("$r_i$"), size=5, color="darkturquoise")
+```
+
+The value of a residual can be calculated as:
+
+$$
+r_i = \underbrace{Y_i}_{\substack{\text{data} \\ \text{point}}} - \underbrace{\hat{Y_i}}_{\substack{\text{point on} \\ \text{regression line}}} \quad \text{(residual)}
+$$
+where $Y_i$ is the observed value and $\hat{Y}_i$ is the predicted value. For example, in the graph above, the large dot represents a day where the actual high was 63°F, but the high predicted by the regression was 61°F. Thus that data point has a residual of 2°F. Pretty simple, huh?
+
+Residuals show you if the observed data point is higher or lower than what is expected from the regression. Residuals are also used in diagnosing the assumptions of a linear regression.
+
+
+
+The next tab shows how residuals can be used to assess the fit of the regression.
+
+<br/>
+<br/>
+<br/>
+
+### Sums of Squares {.tabset .tabset-pills}
+
+"A square is a square," is something both Brother Saunders and elementary school children alike are often caught saying (just teasin'). It sounds like a pointless statement, but it is very helpful in remembering what the upcoming terms mean.
+
+<br/>
+
+
+#### SSE
+
+Kind of like with standard deviation, you might be tempted to find the average of the residuals.Again, like standard deviation, you would always get zero as the "average residual", because some are negative and some are positive - they cancel each other out. So the next best option is to square them.
+
+If you square a single residual it looks like this.
+
+```{r fig.align = 'center'}
+
+ggplot(data=weather, aes(x=average, y=predict_temp)) +
+  labs(x="Average High of Previous Two Days", y="Pedicted Temperature", title="Weather on Rainy Days in Rexburg, April and May 2014 to 2022") +
+  geom_point(color="darkturquoise", size=2) +
+  geom_point(x=65, y=63, color="darkturquoise", size=4) +
+  geom_smooth(method="lm", formula=y~x, se=F, color="firebrick", size=1.1) +
+  theme_bw() +
+  annotate("rect", xmin=63, xmax=65, ymin=61, ymax=63, color="darkturquoise", fill="darkturquoise", alpha=0.2) +
+  coord_fixed() +
+  geom_segment(x=65, y=63, xend=65, yend=61.05, color="darkturquoise", size = 1.2, linetype="solid") +
+  ylim(52,67) +
+  geom_point(x=65, y=61.05, color="firebrick", size=4)
+
+
+
+```
+
+This is where the phrase "a square is a square" comes into play. The square of a residual ($r^2$) is a literal square! And if you square all residuals, you get a bunch of squares like so!
+
+
+```{r fig.align = 'center'}
+
+res <- weather.lm$residuals
+
+ggplot(data=weather, aes(x=average, y=predict_temp)) +
+  labs(x="Average High of Previous Two Days", y="Pedicted Temperature", title="Weather on Rainy Days in Rexburg, April and May 2014 to 2022") +
+  geom_point(color="darkturquoise", size=2) +
+  geom_smooth(method="lm", formula=y~x, se=F, color="firebrick", size=1.1) +
+  theme_bw() +
+  annotate("rect", xmin=weather$average-res, xmax=weather$average, ymin=weather$predict_temp-res, ymax=weather$predict_temp, color="darkturquoise", fill="darkturquoise", alpha=0.2) +
+  coord_fixed() +
+  geom_segment(x=weather$average, y=weather$predict_temp, xend=weather$average, yend=weather$predict_temp-res, color="darkturquoise", size = 1.2, linetype="solid", alpha=0.5) +
+  ylim(52,67) +
+  geom_point(x=weather$average, y=predict(weather.lm, data.frame(average=weather$average)), color="firebrick", size=1.5)
+
+```
+
+This is why this tab is called Sum of Squared Errors (An error is similar to residual. For now, just know that they are somewhat interchangeable). If you added up (or summed) all the squares together into one big square, then you would have the total area of all the square errors, or Sum of Square Errors. From now on, we will just refer to this as SSE.
+
+SSE is a good way to measure how far away in total the data ($Y_i$) are from the regression line ($\hat{Y_i}$). We calculate SSE as follows:
+
+$$
+\text{SSE} = \sum_{i=1}^n \left(Y_i - \hat{Y}_i\right)^2
+$$
+
+Ideally, our regression would help us perfectly understand the regression, and all the data would perfectly be on the line, right? And if that were the case, the SSE would be 0. Thus, The smaller the SSE, the better. And as the SSE gets bigger and bigger, the quality of the regression gets worse and worse.
+
+
+<br/>
+<br/>
+<br/>
+
+#### SSR
+
+The Sum of Squares Regression, or SSR, is similar to SSE. Whereas SSE is the sum of the square of the distances between the **data** and the **regression**, SSR is the sum of the square of the distances between the **regression** ($\hat{Y_i}$) and the **average Y value** ($\bar{Y}$).
+
+```{r fig.align = 'center'}
+
+ggplot(data=weather, aes(x=average, y=predict_temp)) +
+  labs(x="Average High of Previous Two Days", y="Pedicted Temperature", title="Weather on Rainy Days in Rexburg, April and May 2014 to 2022") +
+  geom_point(color="darkturquoise", size=2) +
+  geom_point(x=65, y=61.05, color="firebrick", size=4) +
+  geom_smooth(method="lm", formula=y~x, se=F, color="firebrick", size=1.1) +
+  theme_bw() +
+  annotate("rect", xmin=65, xmax=66.4, ymin=59.6, ymax=61, color="firebrick", fill="firebrick", alpha=0.2) +
+  coord_fixed() +
+  geom_segment(x=65, y=61, xend=65, yend=59.6, color="firebrick", size = 1.1, linetype="solid") +
+  ylim(52,67) +
+  geom_hline(yintercept=59.6, color="firebrick", size=1, linetype="dashed", alpha=0.5) +
+  geom_point(x=65, y=59.6, color="firebrick", size=4)
+
+```
+
+Of course this is only one of the 12 squares needed for the actual SSR. Here is what the graph looks like with all the squares.
+
+```{r fig.align = 'center'}
+
+diff=predict(weather.lm, data.frame(average=weather$average))-mean(weather$predict_temp)
+
+ggplot(data=weather, aes(x=average, y=predict_temp)) +
+  labs(x="Average High of Previous Two Days", y="Pedicted Temperature", title="Weather on Rainy Days in Rexburg, April and May 2014 to 2022") +
+  geom_point(color="darkturquoise", size=2) +
+  geom_smooth(method="lm", formula=y~x, se=F, color="firebrick", size=1.1) +
+  theme_bw() +
+  annotate("rect", xmin=weather$average, xmax=weather$average+diff, ymin=mean(weather$predict_temp), ymax=predict(weather.lm, data.frame(average=weather$average)), color="firebrick", fill="firebrick", alpha=0.2) +
+  coord_fixed() +
+  geom_segment(x=weather$average, y=predict(weather.lm, data.frame(average=weather$average)), xend=weather$average, yend=mean(weather$predict_temp), color="firebrick", size = 1.1, linetype="solid", alpha=0.5) +
+  ylim(52,67) +
+  geom_hline(yintercept=59.6, color="firebrick", size=1, linetype="dashed", alpha=0.5) +
+  geom_point(x=weather$average, y=predict(weather.lm, data.frame(average=weather$average)), color="firebrick", size=2) +
+  geom_point(x=weather$average, y=mean(weather$predict_temp), color="firebrick", size=1.5)
+
+```
+
+You can see that the squares on the graph are the squares of the difference between  between the **regression** ($\hat{Y_i}$) and the **average Y value** ($\bar{Y}$). And that's where the name comes from. Sum of Squares Regression. It is the sum of the squares associated with the regression. The SSR can be calculated as follows:
+
+$$
+\text{SSR} = \sum_{i=1}^n \left(\hat{Y}_i - \bar{Y}\right)^2
+$$
+
+One way to think of SSR is that it is the variability that the regression was able to "explain away", or known variation. This is going to become an important concept that we will come back to later.
+
+
+
+<br/>
+<br/>
+<br/>
+
+#### SSTO
+
+SSTO stands for Total Sum of Squares. It is the sum of the squares of the differences between the **data** ($Y_i$) and the **mean** ($\hat{Y}$).
+
+```{r fig.align = 'center'}
+
+ggplot(data=weather, aes(x=average, y=predict_temp)) +
+  labs(x="Average High of Previous Two Days", y="Pedicted Temperature", title="Weather on Rainy Days in Rexburg, April and May 2014 to 2022") +
+  geom_point(color="darkturquoise", size=2) +
+  geom_smooth(method="lm", formula=y~x, se=F, color="firebrick", size=1.1) +
+  theme_bw() +
+  annotate("rect", xmin=65, xmax=68.4, ymin=59.6, ymax=63, color="green4", fill="green4", alpha=0.2) +
+  coord_fixed() +
+  geom_segment(x=65, y=63, xend=65, yend=59.6, color="green4", size = 1.1, linetype="solid") +
+  ylim(52,67) +
+  geom_hline(yintercept=59.6, color="firebrick", size=1, linetype="dashed", alpha=0.5) +
+  geom_point(x=65, y=63, color="darkturquoise", size=4) +
+  geom_point(x=65, y=59.6, color="firebrick", size=4)
+
+```
+
+And again, this is only part of the SSTO. To get all of it, we have to draw all the squares and sum them together.
+
+```{r fig.align = 'center'}
+diff2 <- weather$predict_temp-mean(weather$predict_temp)
+
+ggplot(data=weather, aes(x=average, y=predict_temp)) +
+  labs(x="Average High of Previous Two Days", y="Pedicted Temperature", title="Weather on Rainy Days in Rexburg, April and May 2014 to 2022") +
+  geom_smooth(method="lm", formula=y~x, se=F, color="firebrick", size=1.1) +
+  theme_bw() +
+  annotate("rect", xmin=weather$average, xmax=weather$average+diff2, ymin=weather$predict_temp-diff2, ymax=weather$predict_temp, color="green4", fill="green4", alpha=0.2) +
+  coord_fixed() +
+  geom_segment(x=weather$average, y=weather$predict_temp, xend=weather$average, yend=mean(weather$predict_temp), color="green4", size = 1.1, linetype="solid", alpha=0.5) +
+  ylim(52,67) +
+  geom_hline(yintercept=59.6, color="firebrick", size=1, linetype="dashed", alpha=0.5) +
+  geom_point(color="darkturquoise", size=2) +
+  geom_point(x=weather$average, y=mean(weather$predict_temp), color="firebrick", size=1.5)
+
+```
+
+Now this is the full picture of SSTO. It is essentially the total variability of the data, and can be calculated as $SSR + SSE$. There is also a more formal way to calculate it:
+
+$$
+\text{SSTO} = \sum_{i=1}^n \left(Y_i - \bar{Y}\right)^2
+$$
+<br/>
+<br/>
+<br/>
+
+### Comparing Sums of Squares
+
+So now we have learned about the three sums of squares. It would be helpful to see all three of them on a graph at once.
+
+<div style="padding-left:25px;font-size:10pt;">
+We will only draw the three squares for one data point so it doesn't get too confusing; but just remember that this graphical depiction is incomplete without the squares for all the data.
+</div>
+
+```{r fig.align = 'center'}
+
+ggplot(data=weather, aes(x=average, y=predict_temp)) +
+  labs(x="Average High of Previous Two Days", y="Pedicted Temperature", title="Weather on Rainy Days in Rexburg, April and May 2014 to 2022") +
+  geom_point(color="darkturquoise", size=2) +
+  geom_smooth(method="lm", formula=y~x, se=F, color="firebrick", size=1.1) +
+  theme_bw() +
+  annotate("rect", xmin=65, xmax=68.4, ymin=59.6, ymax=63, color="green4", fill="green4", alpha=0.2) +
+  geom_segment(x=65.08, y=63, xend=65.08, yend=59.6, color="green4", size = 1.1, linetype="solid") +
+  annotate("rect", xmin=63, xmax=65, ymin=61, ymax=63, color="darkturquoise", fill="darkturquoise", alpha=0.2) +
+  geom_segment(x=64.92, y=63, xend=64.92, yend=61.05, color="darkturquoise", size = 1.2, linetype="solid") +
+  annotate("rect", xmin=65, xmax=63.6, ymin=59.6, ymax=61, color="firebrick", fill="firebrick", alpha=0.2) +
+  geom_segment(x=64.92, y=61, xend=64.92, yend=59.6, color="firebrick", size = 1.1, linetype="solid") +
+  geom_point(x=65, y=63, color="darkturquoise", size=4) +
+  coord_fixed() +
+  ylim(52,67) +
+  geom_hline(yintercept=59.6, color="firebrick", size=1, linetype="dashed", alpha=0.5) +
+  geom_point(x=65, y=predict(weather.lm, data.frame(average=65)), color="firebrick", size=4) +
+  geom_point(x=65, y=mean(weather$predict_temp), color="firebrick", size=4)
+
+```
+
+Now after looking at this graph you might be a bit confused at a statement made earlier. $SSE + SSR = SSTO$ (or on the graph it would be blue + red = green). It's easy to tell that those don't add up. But that's because we're only looking at one data point. For it to be a true *sum*, the three squares have to be shown for all 12 data points.
+
+<br/>
+
+Now here is an important note. For each of the SSE, SSR, and SSTO, if collect, for example, twice as many data points, the sample size doubles. And, assuming the variance stays the same, we will end up with twice as many squares on the graph. This would effectively double all three sums. But it doesn't mean that the regression got any better or worse. The quality of the regression comes from comparing these sums to each other, which is what the next section discusses: using the three sums to calculate how well the regression fits the data.
+
+<br/>
+<br/>
+<br/>
+
+### R^2
+
+You can rearrange the equation relating the three sums as follows:
+
+$$
+SSE + SSR = SSTO
+$$
+$$
+SSTO - SSR = SSE
+$$
+
+This is important, because another way to think of the three sums is SSTO is the **total** variability, SSR is the **known** variability, and SSE is the **unknown** variability. That is why earlier it was stated that SSR is the variability that was "explained away", and we are then left with the "unknown" variability, or $SSE$.
+
+Because SSR is the **known** variability, we can divide it by SSTO, the **total** variability, to find what portion of the variability is explained by the regression. This is called $R^2$:
+
+$$
+R^2 = \frac{SSR}{SSTO} = 1 - \frac{SSE}{SSTO}
+$$
+
+The formal definition of $R^2$ is the proportion of the total variation explained by the regression. The highest $R^2$ can be is 1 (because you can't have more explained variation than exists), and the lowest is 0 (because you can't have more unexplained variation than exists).
+
+Here are the sums of squares and $R^2$ vlaues for the `weather` data that we have been looking at.
+
+|SSE|SSR|SSTO|$R^2$|
+|:-:|:-:|:--:|:---:|
+|63.8|25.2|88.9|.29|
+
+
+```{r fig.align = 'center', eval=FALSE}
+sse <- sum( (weather.lm$residuals)^2 )	
+ssr <- sum( (weather.lm$fit - mean(weather$predict_temp))^2 )	
+ssto <- sum( (weather$predict_temp - mean(weather$predict_temp))^2 )
+r2 <- ssr/ssto
+
+
+```
+
+And here is a to-scale representation of $R^2$ for the `weather` data. The green represents SSTO, or **total** variation; the red represents SSR, or **known** variation; and the difference is SSR, or **unknown** variation. $R^2$ is 29%, which is just above one quarter, and you can tell that the red square does indeed take up just over one quarter of the green square.
+
+<div style="font-size:10pt;">
+It should be noted that this is not a *part* of SSTO, SSR, and SSE that corresponds to a single data point. This is the actual *sum* of the three different squares that have been described.
+</div>
+
+```{r fig.align = 'center'}
+
+ggplot() +
+  geom_rect(aes(xmin=0, xmax=9.43, ymin=0, ymax=9.43, fill="SSTO"), color="green4", alpha=0.2) +
+  geom_rect(aes(xmin=0, xmax=5.02, ymin=0, ymax=5.02, fill="SSR"), color="firebrick", alpha=0.7) +
+  coord_fixed() +
+  scale_fill_manual(values=c("firebrick","green4"), name="Sum")
+```
+
+0.29 really isn't that great of an $R^2$ value. Remember, the difference between SSTO and SSR is the unknown variation, SSE, or the part of the green square that is still visible. And there's still a good chunk of the green square that is visible. That means our model didn't do that well of a job at explaining what is going on.
+
+<br/>
+<br/>
+<br/>
